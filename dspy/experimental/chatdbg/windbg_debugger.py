@@ -7,6 +7,11 @@ from dspy.experimental.chatdbg.instructions import DOTNET_COOKBOOK, JS_COOKBOOK,
 from dspy.experimental.chatdbg.tools.windbg_base import make_base_tools
 from dspy.experimental.chatdbg.tools.windbg_dotnet import make_dotnet_tools
 from dspy.experimental.chatdbg.tools.windbg_js import make_js_tools
+from dspy.experimental.chatdbg.tools.windbg_extensions import (
+    discover_js_extensions,
+    load_js_extensions,
+    make_extension_tools,
+)
 from dspy.experimental.chatdbg.tools.windbg_ttd import make_ttd_tools
 
 
@@ -38,6 +43,7 @@ class WinDbgDebugger(dspy.Module):
         bridge: CDBBridge,
         unsafe: bool = False,
         max_iters: int = 15,
+        js_extension_paths: str = "",
     ):
         super().__init__()
         self.bridge = bridge
@@ -53,6 +59,14 @@ class WinDbgDebugger(dspy.Module):
 
         if bridge.detect_jsprovider():
             tools.extend(make_js_tools(bridge, unsafe=unsafe))
+
+        # Discover and load JS extensions
+        extensions = discover_js_extensions(bridge, js_extension_paths)
+        if extensions:
+            load_results = load_js_extensions(bridge, extensions)
+            loaded = [ext for ext in extensions if load_results.get(ext["name"])]
+            if loaded:
+                tools.extend(make_extension_tools(bridge, loaded))
 
         # Build signature with appropriate instructions
         instructions = WINDBG_INSTRUCTIONS
