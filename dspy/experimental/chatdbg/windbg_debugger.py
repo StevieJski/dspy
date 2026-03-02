@@ -74,14 +74,49 @@ class WinDbgDebugger(dspy.Module):
 
         self.react = dspy.ReAct(signature=signature, tools=tools, max_iters=max_iters)
 
-    def forward(self, error_context: str, stack_trace: str):
+    def forward(self, error_context: str = None, stack_trace: str = None):
         """Analyze a crash and produce diagnosis and recommendation.
+
+        If error_context or stack_trace are not provided, they are automatically
+        collected from the debugger bridge (requires an active debug session).
 
         Args:
             error_context: Error message, crash analysis (!analyze -v output), etc.
+                If None, auto-collects via !analyze -v and .ecxr.
             stack_trace: Stack trace from the crashed program.
+                If None, auto-collects via 'k 20'.
 
         Returns:
             dspy.Prediction with fields: diagnosis, recommendation, trajectory
         """
+        if error_context is None:
+            error_context = self._collect_error_context()
+        if stack_trace is None:
+            stack_trace = self._collect_stack_trace()
+
         return self.react(error_context=error_context, stack_trace=stack_trace)
+
+    def _collect_error_context(self) -> str:
+        """Auto-collect error context from the debugger."""
+        parts = []
+
+        # Command line
+        cmdline = self.bridge.get_command_line()
+        if cmdline:
+            parts.append(f"Command line: {cmdline}")
+
+        # Crash analysis
+        analysis = self.bridge.get_crash_analysis()
+        if analysis:
+            parts.append(analysis)
+
+        # Exception context record
+        ecxr = self.bridge.get_exception_context()
+        if ecxr:
+            parts.append(f"Exception context:\n{ecxr}")
+
+        return "\n\n".join(parts) if parts else "Unknown error"
+
+    def _collect_stack_trace(self) -> str:
+        """Auto-collect stack trace from the debugger."""
+        return self.bridge.get_stack(20) or "No stack trace available"
