@@ -5,11 +5,13 @@ gaining prompt optimization, model-agnostic orchestration, and native tool calli
 """
 
 from dspy.experimental.chatdbg.cdb_bridge import CDBBridge
+from dspy.experimental.chatdbg.cdb_session import CDBSession
 from dspy.experimental.chatdbg.signatures import DebugCrash, DebugFollowup
 from dspy.experimental.chatdbg.windbg_debugger import WinDbgDebugger
 
 __all__ = [
     "CDBBridge",
+    "CDBSession",
     "DebugCrash",
     "DebugFollowup",
     "WinDbgDebugger",

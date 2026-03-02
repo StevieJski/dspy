@@ -21,7 +21,7 @@ class WinDbgDebugger(dspy.Module):
         import dspy
         from dspy.experimental.chatdbg import WinDbgDebugger, CDBBridge
 
-        dspy.configure(lm=dspy.LM("openai/gpt-5.3-codex"))
+        dspy.configure(lm=dspy.LM("chatgpt/gpt-5.3-codex"))
         bridge = CDBBridge(pykd_module=pykd)
         debugger = WinDbgDebugger(bridge)
         result = debugger(
